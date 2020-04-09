@@ -1,8 +1,15 @@
 "shove this in ~/.vim/nerdtree_plugin/grep_menuitem.vim
 "
-"A really rough integration of :grep with nerdtree. Adds a 'g' menu item that
-"prompts the user for a search pattern to use with :grep. :grep is run on the
-"selected dir (using the parent if a file is selected)
+" Add 'g' menu items to grep under selected directory.
+" 'g' : prompts the user to type search pattern under selected dir.
+"       use parent directory if file is selected.
+"       This uses ':grep'.
+"
+" For ripgrep user,
+"   NERDTreeRipGrepDirectory function is much, much faster. 
+"   Requirements:
+"   - Ripgrep: https://github.com/BurntSushi/ripgrep
+"   - vim-ripgrep: https://github.com/jremmen/vim-ripgrep
 "
 " Originally written by scrooloose
 " (http://gist.github.com/205807)
@@ -49,4 +56,41 @@ function! NERDTreeGrep()
         " echo "Multiple hits. Jumping to first, use :copen to see them all."
     endif
 
+endfunction
+
+" FUNCTION: NERDTreeRipGrepDirectory() {{{1
+" This is for ripgrep user.
+function! NERDTreeRipGrepDirectory()
+    let dirnode = g:NERDTreeDirNode.GetSelected()
+    let pattern = input("Enter the search pattern/options: ")
+
+    if pattern == ''
+        call nedtree#echo("Grep directory aborted.")
+        return
+    "else
+    "    if match(pattern, '"') >= 0
+    "        let pattern = substitute(pattern, '"', '\\"', 'g')
+    "    endif
+    "    let pattern = join(['"', pattern, '"'], '')
+    endif
+
+    wincmd w
+    let old_shellpipe = &shellpipe
+    let &shellpipe='&>'
+
+    try
+        let s:current_dir = expand("%:p:h")
+        exec 'silent cd ' . dirnode.path.str()
+        exec 'silent Rg ' . pattern .' .'
+    finally
+        let &shellpipe = old_shellpipe
+        exec 'silent cd '. s:current_dir
+    endtry
+
+    let hits = len(getqflist())
+    if hits == 0
+        echo "No hits"
+    elseif hits > 1
+        copen
+    endif
 endfunction
