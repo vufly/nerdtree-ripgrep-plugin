@@ -81,7 +81,7 @@ function! NERDTreeRipGrepDirectory()
     try
         let s:current_dir = expand("%:p:h")
         exec 'silent cd ' . dirnode.path.str()
-        exec 'silent Rg ' . pattern .' .'
+        exec 'silent Rg ' . pattern
     finally
         let &shellpipe = old_shellpipe
         exec 'silent cd '. s:current_dir
